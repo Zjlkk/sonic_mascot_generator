@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mascot Generator — prototype</title>
+<style>
+  :root{
+    --bg:#121212; --panel:#1b1b1b; --surface:#202020; --border:#2a2a2a;
+    --text:#eaeaea; --muted:#a9a9a9; --accent:#4aa3ff; --ring:rgba(74,163,255,.35);
+    --r:14px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:14px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Arial}
+  .app{max-width:1100px;margin:24px auto;padding:0 16px;display:grid;grid-template-columns:1fr 360px;gap:16px}
+  @media (max-width:1000px){ .app{grid-template-columns:1fr} }
+  .stage-wrap{background:var(--panel);border:1px solid var(--border);border-radius:var(--r);padding:12px}
+  .stage{position:relative;aspect-ratio:1/1;width:100%;background:
+    linear-gradient(0deg, rgba(255,255,255,.04) 1px, transparent 1px) 0 0/20px 20px,
+    linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px) 0 0/20px 20px,
+    var(--surface);border-radius:10px;overflow:hidden}
+  .layer{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+  .layer img,.layer svg{width:100%;height:100%;object-fit:contain;pointer-events:none}
+  #layer-body  { z-index:0; }
+  #layer-pose  { z-index:1; }
+  #layer-face  { z-index:2; }
+  #layer-hands { z-index:3; }
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:14px}
+  .row{display:flex;align-items:center;gap:10px;justify-content: center;}
+  .tabs{display:flex;gap:8px;flex-wrap:wrap}
+  .tab{padding:8px 10px;border:1px solid var(--border);background:var(--surface);border-radius:10px;cursor:pointer;color:var(--muted)}
+  .tab.active{color:var(--text);border-color:var(--accent);box-shadow:0 0 0 3px var(--ring)}
+  .ctrl{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center}
+  .btn{padding:8px 10px;border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:10px;cursor:pointer}
+  .btn:hover{border-color:var(--accent)}
+  .btn:active{transform:translateY(1px)}
+  .select{width:100%;padding:8px 10px;border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:10px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+</style>
+</head>
+<body>
+  <div class="app">
+    <section class="stage-wrap">
+      <div class="stage" id="stage" aria-label="Mascot">
+        <div class="layer" id="layer-body"></div>
+        <div class="layer" id="layer-pose"></div>
+        <div class="layer" id="layer-face"></div>
+        <div class="layer" id="layer-hands"></div>
+      </div>
+    </section>
+    <aside class="panel" id="ui">
+      <div class="row" style="margin-bottom:6px;">
+        <span>Mascot generator for Sonic</span>
+        <a href="https://www.sonic.game/" target="_blank" rel="noopener noreferrer">
+          <img src="svg/Sonic-logo.svg" alt="Sonic Logo" style="height:32px;">
+        </a>
+      </div>
+      <div class="tabs" id="tabs">
+        <button class="tab active" data-layer="pose">Legs</button>
+        <button class="tab" data-layer="hands">Arms</button>
+        <button class="tab" data-layer="face">Emotions</button>
+        <button class="tab" data-layer="body">Body</button>
+      </div>
+      <div class="ctrl">
+        <button class="btn" data-action="prev">◀</button>
+        <select class="select" id="select-current"></select>
+        <button class="btn" data-action="next">▶</button>
+      </div>
+      <div class="grid">
+        <button class="btn" id="btn-random-one">🎲 Random (layer)</button>
+        <button class="btn" id="btn-random-all">🎲 Random (all)</button>
+      </div>
+      <div class="grid">
+        <button class="btn" id="btn-save-png">💾 Save PNG</button>
+      </div>
+    </aside>
+  </div>
+<script>
+const ASSETS = {
+  pose: [
+    "Sitting.svg","Running .svg","Walking .svg",
+    "Jump.svg","Jump Kick .svg","Leaning on one leg.svg","Crossed legs .svg"
+  ],
+  hands: [
+    "Open hand.svg","Hands Raised.svg","Fist (Raised) .svg","Pointing.svg",
+    "Thumbs up.svg","Thumbs Down.svg","Middle Finger.svg","Holding Phone.svg","Salute.svg"
+  ],
+  face: [
+    "Neutral .svg","Happy.svg","Laughing.svg","Winking .svg","Love eyes .svg",
+    "Mischievous Smirk.svg","Embarrassed Blush.svg","Sad.svg","Thinking.svg",
+    "Excited.svg","Cringing.svg","Bearish.svg","Bullish.svg","Angry.svg","Lububu.svg"
+  ],
+  body: ["Standing .svg","other1.svg","other2.svg","other3.svg","other4.svg"]
+};
+const LAYERS = ["body","pose","face","hands"];
+const state = { activeLayer: "pose", index: { pose:0, hands:0, face:0, body:0 } };
+function srcFor(file){ return "svg/" + encodeURIComponent(file); }
+function altTrimmedName(file){ return file.replace(/\s+\.svg$/i, ".svg"); }
+function displayName(layer, filename, idx){
+  if (layer === "body") return `Body ${idx+1}`;
+  return filename.replace(/\s*\.svg$/i,"").trim();
+}
+function setLayerImage(layer, filename){
+  const host = document.getElementById(`layer-${layer}`);
+  host.innerHTML = "";
+  if (!filename) return;
+  const img = new Image();
+  img.decoding = "async";
+  img.alt = `${layer} - ${filename}`;
+  img.onerror = () => {
+    const alt = altTrimmedName(filename);
+    if (alt !== filename) img.src = srcFor(alt);
+  };
+  img.src = srcFor(filename);
+  host.appendChild(img);
+}
+function applyStateToStage(){
+  for(const layer of LAYERS){
+    const list = ASSETS[layer];
+    const idx  = list.length ? state.index[layer] % list.length : 0;
+    const file = list[idx];
+    setLayerImage(layer, file);
+  }
+}
+function updateSelect(){
+  const sel = document.getElementById("select-current");
+  const layer = state.activeLayer;
+  const list = ASSETS[layer];
+  sel.innerHTML = "";
+  list.forEach((f, i)=>{
+    const opt = document.createElement("option");
+    opt.value = i;
+    opt.textContent = displayName(layer, f, i);
+    sel.appendChild(opt);
+  });
+  sel.value = String(state.index[layer] ?? 0);
+}
+function setActiveLayer(layer){
+  state.activeLayer = layer;
+  document.querySelectorAll(".tab").forEach(t=>{
+    t.classList.toggle("active", t.dataset.layer === layer);
+  });
+  updateSelect();
+}
+function step(layer, dir){
+  const list = ASSETS[layer];
+  const n = list.length;
+  if (!n) return;
+  state.index[layer] = ((state.index[layer] + dir) % n + n) % n;
+  applyStateToStage();
+  if (layer === state.activeLayer) updateSelect();
+}
+function randomizeLayer(layer){
+  const list = ASSETS[layer];
+  const n = list.length;
+  if (!n) return;
+  let next = Math.floor(Math.random() * n);
+  if (n > 1 && next === state.index[layer]) next = (next + 1) % n;
+  state.index[layer] = next;
+}
+function randomizeAll(){
+  for(const layer of LAYERS) randomizeLayer(layer);
+  applyStateToStage(); updateSelect();
+}
+async function savePNG(){
+  const stage = document.getElementById("stage");
+  const W = stage.clientWidth;
+  const H = stage.clientHeight;
+  const canvas = document.createElement("canvas");
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext("2d");
+  for (const layer of LAYERS){
+    const list = ASSETS[layer];
+    const n = list.length;
+    if (!n) continue;
+    const file = list[state.index[layer] % n];
+    const src = srcFor(file);
+    await new Promise((res)=>{
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = ()=>{ ctx.drawImage(img, 0, 0, W, H); res(); };
+      img.onerror = ()=>{
+        const alt = srcFor(altTrimmedName(file));
+        const img2 = new Image();
+        img2.crossOrigin = "anonymous";
+        img2.onload = ()=>{ ctx.drawImage(img2, 0, 0, W, H); res(); };
+        img2.onerror = ()=>res();
+        img2.src = alt;
+      };
+      img.src = src;
+    });
+  }
+  const url = canvas.toDataURL("image/png");
+  const a = document.createElement("a");
+  a.href = url; a.download = "mascot.png"; a.click();
+}
+function init(){
+  document.getElementById("tabs").addEventListener("click", (e)=>{
+    const btn = e.target.closest(".tab");
+    if (!btn) return;
+    setActiveLayer(btn.dataset.layer);
+  });
+  document.querySelector("[data-action='prev']").addEventListener("click", ()=> step(state.activeLayer, -1));
+  document.querySelector("[data-action='next']").addEventListener("click", ()=> step(state.activeLayer, +1));
+  document.getElementById("select-current").addEventListener("change", (e)=>{
+    state.index[state.activeLayer] = Number(e.target.value)||0;
+    applyStateToStage();
+  });
+  document.getElementById("btn-random-one").addEventListener("click", ()=>{
+    randomizeLayer(state.activeLayer);
+    applyStateToStage(); updateSelect();
+  });
+  document.getElementById("btn-random-all").addEventListener("click", randomizeAll);
+  document.getElementById("btn-save-png").addEventListener("click", savePNG);
+  applyStateToStage();
+  setActiveLayer("pose");
+}
+document.addEventListener("DOMContentLoaded", init);
+</script>
+</body>
+</html>
