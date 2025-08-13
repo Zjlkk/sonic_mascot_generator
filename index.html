@@ -164,10 +164,10 @@ function randomizeAll(){
 }
 async function savePNG(){
   const stage = document.getElementById("stage");
-  const W = stage.clientWidth;
-  const H = stage.clientHeight;
+  const scale = 2000; 
   const canvas = document.createElement("canvas");
-  canvas.width = W; canvas.height = H;
+  canvas.width = scale;
+  canvas.height = scale;
   const ctx = canvas.getContext("2d");
   for (const layer of LAYERS){
     const list = ASSETS[layer];
@@ -178,12 +178,12 @@ async function savePNG(){
     await new Promise((res)=>{
       const img = new Image();
       img.crossOrigin = "anonymous";
-      img.onload = ()=>{ ctx.drawImage(img, 0, 0, W, H); res(); };
+      img.onload = ()=>{ ctx.drawImage(img, 0, 0, scale, scale); res(); };
       img.onerror = ()=>{
         const alt = srcFor(altTrimmedName(file));
         const img2 = new Image();
         img2.crossOrigin = "anonymous";
-        img2.onload = ()=>{ ctx.drawImage(img2, 0, 0, W, H); res(); };
+        img2.onload = ()=>{ ctx.drawImage(img2, 0, 0, scale, scale); res(); };
         img2.onerror = ()=>res();
         img2.src = alt;
       };
@@ -192,8 +192,11 @@ async function savePNG(){
   }
   const url = canvas.toDataURL("image/png");
   const a = document.createElement("a");
-  a.href = url; a.download = "mascot.png"; a.click();
+  a.href = url; 
+  a.download = "mascot.png"; 
+  a.click();
 }
+
 function init(){
   document.getElementById("tabs").addEventListener("click", (e)=>{
     const btn = e.target.closest(".tab");
