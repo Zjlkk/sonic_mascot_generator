@@ -21,12 +21,14 @@
     var(--surface);border-radius:10px;overflow:hidden}
   .layer{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
   .layer img,.layer svg{width:100%;height:100%;object-fit:contain;pointer-events:none}
-  #layer-body  { z-index:0; }
-  #layer-pose  { z-index:1; }
-  #layer-face  { z-index:2; }
-  #layer-hands { z-index:3; }
+  #layer-body       { z-index:0; }
+  #layer-pose       { z-index:1; }
+  #layer-face       { z-index:2; }
+  #layer-hand-left  { z-index:3; }
+  #layer-hand-right { z-index:4; }
+
   .panel{background:var(--panel);border:1px solid var(--border);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:14px}
-  .row{display:flex;align-items:center;gap:10px;justify-content: center;}
+  .row{display:flex;align-items:center;gap:10px;justify-content:center;}
   .tabs{display:flex;gap:8px;flex-wrap:wrap}
   .tab{padding:8px 10px;border:1px solid var(--border);background:var(--surface);border-radius:10px;cursor:pointer;color:var(--muted)}
   .tab.active{color:var(--text);border-color:var(--accent);box-shadow:0 0 0 3px var(--ring)}
@@ -45,19 +47,21 @@
         <div class="layer" id="layer-body"></div>
         <div class="layer" id="layer-pose"></div>
         <div class="layer" id="layer-face"></div>
-        <div class="layer" id="layer-hands"></div>
+        <div class="layer" id="layer-hand-left"></div>
+        <div class="layer" id="layer-hand-right"></div>
       </div>
     </section>
     <aside class="panel" id="ui">
       <div class="row" style="margin-bottom:6px;">
-        <span>Mascot generator for Sonic</span>
+        <span>Mascot generator for </span>
         <a href="https://www.sonic.game/" target="_blank" rel="noopener noreferrer">
           <img src="svg/Sonic-logo.svg" alt="Sonic Logo" style="height:32px;">
         </a>
       </div>
       <div class="tabs" id="tabs">
         <button class="tab active" data-layer="pose">Legs</button>
-        <button class="tab" data-layer="hands">Arms</button>
+        <button class="tab" data-layer="handLeft">Left hand</button>
+        <button class="tab" data-layer="handRight">Right hand</button>
         <button class="tab" data-layer="face">Emotions</button>
         <button class="tab" data-layer="body">Body</button>
       </div>
@@ -78,22 +82,33 @@
 <script>
 const ASSETS = {
   pose: [
-    "Sitting.svg","Running .svg","Walking .svg",
-    "Jump.svg","Jump Kick .svg","Leaning on one leg.svg","Crossed legs .svg"
+    "Feet--Cross-legged.svg","Feet--Jump-kicking.svg","Feet--Jumping.svg",
+    "Feet--Running.svg","Feet--Sitting.svg","Feet--Standing on one leg.svg",
+    "Feet--Standing.svg","Feet--Walking.svg"
   ],
-  hands: [
-    "Open hand.svg","Hands Raised.svg","Fist (Raised) .svg","Pointing.svg",
-    "Thumbs up.svg","Thumbs Down.svg","Middle Finger.svg","Holding Phone.svg","Salute.svg"
+  handLeft: [
+    "Clenched fist -left.svg","Hand up-left.svg","Holding a phone-left.svg",
+    "Middle finger-left.svg","Palm open-left.svg","Point at-left.svg",
+    "Salute-left.svg","Thumbs down-left.svg","Thumbs up-left.svg"
+  ],
+  handRight: [
+    "Clenched fist -right.svg","Hand up-right.svg","Holding a phone-right.svg",
+    "Middle finger-right.svg","Palm open-right.svg","Point at-right.svg",
+    "Thumbs down-right.svg","Thumbs up-right.svg","right-46.svg"
   ],
   face: [
-    "Neutral .svg","Happy.svg","Laughing.svg","Winking .svg","Love eyes .svg",
-    "Mischievous Smirk.svg","Embarrassed Blush.svg","Sad.svg","Thinking.svg",
-    "Excited.svg","Cringing.svg","Bearish.svg","Bullish.svg","Angry.svg","Lububu.svg"
+    "Face--Angry.svg","Face--Bearish.svg","Face--Blushing shyly.svg","Face--Bullish.svg",
+    "Face--Cringing.svg","Face--Happy.svg","Face--Laughing hard.svg","Face--Lububu.svg",
+    "Face--Neutral expression.svg","Face--Sad.svg","Face--Sly grin.svg","Face--Thinking.svg",
+    "Face--Winking.svg","Face-- Excited.svg","Face-- Heart eyes.svg"
   ],
-  body: ["Standing .svg","other1.svg","other2.svg","other3.svg","other4.svg"]
+  body: [
+    "Body--Neutral.svg","Body-- Sitting.svg","Body--Casual lean.svg",
+    "Body--Lying down.svg","Body--Mid-air jump.svg"
+  ]
 };
-const LAYERS = ["body","pose","face","hands"];
-const state = { activeLayer: "pose", index: { pose:0, hands:0, face:0, body:0 } };
+const LAYERS = ["body","pose","face","handLeft","handRight"];
+const state = { activeLayer: "pose", index: { pose:0, handLeft:0, handRight:0, face:0, body:0 } };
 function srcFor(file){ return "svg/" + encodeURIComponent(file); }
 function altTrimmedName(file){ return file.replace(/\s+\.svg$/i, ".svg"); }
 function displayName(layer, filename, idx){
@@ -101,7 +116,7 @@ function displayName(layer, filename, idx){
   return filename.replace(/\s*\.svg$/i,"").trim();
 }
 function setLayerImage(layer, filename){
-  const host = document.getElementById(`layer-${layer}`);
+  const host = document.getElementById(`layer-${layer.replace(/[A-Z]/g, m => "-" + m.toLowerCase())}`);
   host.innerHTML = "";
   if (!filename) return;
   const img = new Image();
@@ -163,8 +178,7 @@ function randomizeAll(){
   applyStateToStage(); updateSelect();
 }
 async function savePNG(){
-  const stage = document.getElementById("stage");
-  const scale = 2000; 
+  const scale = 2000;
   const canvas = document.createElement("canvas");
   canvas.width = scale;
   canvas.height = scale;
@@ -192,11 +206,10 @@ async function savePNG(){
   }
   const url = canvas.toDataURL("image/png");
   const a = document.createElement("a");
-  a.href = url; 
-  a.download = "mascot.png"; 
+  a.href = url;
+  a.download = "mascot.png";
   a.click();
 }
-
 function init(){
   document.getElementById("tabs").addEventListener("click", (e)=>{
     const btn = e.target.closest(".tab");
