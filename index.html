@@ -39,6 +39,7 @@
   .select{width:100%;padding:8px 10px;border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:10px}
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 </head>
 <body>
   <div class="app">
@@ -53,7 +54,7 @@
     </section>
     <aside class="panel" id="ui">
       <div class="row" style="margin-bottom:6px;">
-        <span>Mascot generator for </span>
+        <span>Mascot generator for Sonic</span>
         <a href="https://www.sonic.game/" target="_blank" rel="noopener noreferrer">
           <img src="svg/Sonic-logo.svg" alt="Sonic Logo" style="height:32px;">
         </a>
@@ -76,6 +77,7 @@
       </div>
       <div class="grid">
         <button class="btn" id="btn-save-png">💾 Save PNG</button>
+        <button class="btn" id="btn-download-zip">⬇️ Download SVG ZIP</button>
       </div>
     </aside>
   </div>
@@ -107,6 +109,7 @@ const ASSETS = {
     "Body--Lying down.svg","Body--Mid-air jump.svg"
   ]
 };
+const EXTRA_SVGS = ["Sonic-logo.svg"];
 const LAYERS = ["body","pose","face","handLeft","handRight"];
 const state = { activeLayer: "pose", index: { pose:0, handLeft:0, handRight:0, face:0, body:0 } };
 function srcFor(file){ return "svg/" + encodeURIComponent(file); }
@@ -210,6 +213,30 @@ async function savePNG(){
   a.download = "mascot.png";
   a.click();
 }
+async function downloadZip(){
+  const zip = new JSZip();
+  const filesSet = new Set(EXTRA_SVGS);
+  Object.values(ASSETS).forEach(arr => arr.forEach(name => filesSet.add(name)));
+  const files = Array.from(filesSet);
+  await Promise.all(files.map(async (name)=>{
+    const tryFetch = async (n) => {
+      const res = await fetch(srcFor(n));
+      if (!res.ok) throw new Error("nf");
+      return await res.text();
+    };
+    let text;
+    try { text = await tryFetch(name); }
+    catch { text = await tryFetch(altTrimmedName(name)); }
+    zip.file(name, text);
+  }));
+  const blob = await zip.generateAsync({type:"blob"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "svg-assets.zip";
+  a.click();
+  URL.revokeObjectURL(url);
+}
 function init(){
   document.getElementById("tabs").addEventListener("click", (e)=>{
     const btn = e.target.closest(".tab");
@@ -228,6 +255,7 @@ function init(){
   });
   document.getElementById("btn-random-all").addEventListener("click", randomizeAll);
   document.getElementById("btn-save-png").addEventListener("click", savePNG);
+  document.getElementById("btn-download-zip").addEventListener("click", downloadZip);
   applyStateToStage();
   setActiveLayer("pose");
 }
