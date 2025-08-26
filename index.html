@@ -70,11 +70,22 @@
     display:block;
     filter:drop-shadow(0 6px 24px rgba(0,0,0,.35));
   }
-  .hero-card h1{
+  .hero-title{
     color:var(--text);
-    font-size:3rem;
-    line-height:1.1;
-    margin:0 0 16px 0;
+    font-size:clamp(28px, 4.5vw, 56px);
+    line-height:1.05;
+    margin:0 0 18px 0;
+    letter-spacing:-0.02em;
+  }
+  .hero-title .title-main{
+    display:block;
+    font-weight:800;
+  }
+  .hero-title .title-sub{
+    display:block;
+    color:var(--accent);
+    font-weight:700;
+    opacity:.95;
   }
   .hero-sections{
     display:flex;
@@ -125,7 +136,7 @@
           <img src="img/sonunu.png" alt="Sonunu mascot" loading="eager" decoding="async" onerror="this.onerror=null;this.src='svg/Sonic-logo.svg'">
         </div>
         <div class="hero-copy">
-          <h1>Meet Sonunu with Sonic SVM</h1>
+          <h1 class="hero-title"><span class="title-main">Meet Sonunu</span><span class="title-sub">Powered by Sonic SVM</span></h1>
           <div class="hero-sections">
             <div class="hero-block">
               <div class="section-title">Lore/Story:</div>
