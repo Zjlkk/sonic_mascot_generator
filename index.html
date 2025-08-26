@@ -38,10 +38,85 @@
   .btn:active{transform:translateY(1px)}
   .select{width:100%;padding:8px 10px;border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:10px}
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .hero{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--r);
+    padding:16px;
+    margin:24px 16px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:20px;
+  }
+  .hero-card{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:var(--r);
+    padding:20px;
+    width:100%;
+    max-width:800px;
+    text-align:center;
+  }
+  .hero-card h1{
+    color:var(--text);
+    font-size:2.5em;
+    margin-bottom:15px;
+  }
+  .hero-sections{
+    display:flex;
+    flex-direction:column;
+    gap:15px;
+  }
+  .hero-block{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--r);
+    padding:15px;
+  }
+  .section-title{
+    color:var(--text);
+    font-size:1.2em;
+    margin-bottom:10px;
+    text-align:left;
+  }
+  .hero-block p{
+    color:var(--muted);
+    font-size:1em;
+    text-align:left;
+  }
+  .hero-block ul{
+    list-style:none;
+    padding:0;
+    margin:0;
+    text-align:left;
+  }
+  .hero-block li{
+    color:var(--text);
+    font-size:0.9em;
+    margin-bottom:5px;
+  }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 </head>
 <body>
+  <section class="hero">
+    <div class="hero-card">
+      <h1>Meet Sonunu with Sonic SVM</h1>
+      <div class="hero-sections">
+        <div class="hero-block">
+          <div class="section-title">Lore/Story:</div>
+          <p id="hero-lore">Coming soon.</p>
+        </div>
+        <div class="hero-block">
+          <div class="section-title">Specs:</div>
+          <ul id="hero-specs">
+            <li>...</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
   <div class="app">
     <section class="stage-wrap">
       <div class="stage" id="stage" aria-label="Mascot">
