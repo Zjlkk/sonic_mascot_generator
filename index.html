@@ -42,26 +42,39 @@
     background:var(--surface);
     border:1px solid var(--border);
     border-radius:var(--r);
-    padding:16px;
-    margin:24px 16px;
+    padding:32px;
+    margin:32px 16px;
     display:flex;
     align-items:center;
     justify-content:center;
-    gap:20px;
+    gap:24px;
   }
   .hero-card{
     background:var(--panel);
     border:1px solid var(--border);
     border-radius:var(--r);
-    padding:20px;
+    padding:28px;
     width:100%;
-    max-width:800px;
-    text-align:center;
+    max-width:1100px;
+    text-align:left;
+  }
+  .hero-grid{
+    display:grid;
+    grid-template-columns:420px 1fr;
+    gap:24px;
+    align-items:center;
+  }
+  .hero-art img{
+    width:100%;
+    height:auto;
+    display:block;
+    filter:drop-shadow(0 6px 24px rgba(0,0,0,.35));
   }
   .hero-card h1{
     color:var(--text);
-    font-size:2.5em;
-    margin-bottom:15px;
+    font-size:3rem;
+    line-height:1.1;
+    margin:0 0 16px 0;
   }
   .hero-sections{
     display:flex;
@@ -93,8 +106,13 @@
   }
   .hero-block li{
     color:var(--text);
-    font-size:0.9em;
-    margin-bottom:5px;
+    font-size:0.95em;
+    margin-bottom:6px;
+  }
+  @media (max-width:900px){
+    .hero-grid{ grid-template-columns:1fr; }
+    .hero-card{ text-align:center; }
+    .hero-card h1{ font-size:2.25rem; }
   }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
@@ -102,17 +120,27 @@
 <body>
   <section class="hero">
     <div class="hero-card">
-      <h1>Meet Sonunu with Sonic SVM</h1>
-      <div class="hero-sections">
-        <div class="hero-block">
-          <div class="section-title">Lore/Story:</div>
-          <p id="hero-lore">Coming soon.</p>
+      <div class="hero-grid">
+        <div class="hero-art">
+          <img src="img/sonunu.png" alt="Sonunu mascot">
         </div>
-        <div class="hero-block">
-          <div class="section-title">Specs:</div>
-          <ul id="hero-specs">
-            <li>...</li>
-          </ul>
+        <div class="hero-copy">
+          <h1>Meet Sonunu with Sonic SVM</h1>
+          <div class="hero-sections">
+            <div class="hero-block">
+              <div class="section-title">Lore/Story:</div>
+              <p id="hero-lore">Born on the fast lanes of Sonic, Sonunu is a bright, bouncy spirit who turns speed into smiles. Fueled by Sonic SVM, he learns new poses and emotions in a snap, cheering on builders and traders across the network.</p>
+            </div>
+            <div class="hero-block">
+              <div class="section-title">Specs:</div>
+              <ul id="hero-specs">
+                <li>Layers: 5 (Body, Legs, Face, Left hand, Right hand)</li>
+                <li>Combinations: 48,600+ unique looks</li>
+                <li>Exports: PNG 2000×2000; Sources: SVG ZIP</li>
+                <li>Controls: Tabs, Prev/Next, Random (layer/all)</li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
     </div>
